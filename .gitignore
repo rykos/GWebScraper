@@ -8,6 +8,7 @@
 [Ss]ites
 [Jj]sonData.*
 [Ll]inks*
+.vscode
 
 # User-specific files
 *.rsuser
