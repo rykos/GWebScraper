@@ -6,21 +6,39 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using GlobalVariables;
+using System.Net;
 
 namespace webScraper
 {
     class Program
     {
         static readonly string[] Requirements = LoadRequirements();//Fields to scrap
-        static readonly int? Failures;//Max amount of failed scrapped fields in single site
+        static Settings settings;
 
         static void Main(string[] args)
         {
             RebuildDependables();
+            LoadSettings();
             SelectScrapMode();
-            
         }
 
+        private static void LoadSettings()
+        {
+            string[] settingsLines = File.ReadAllLines("Settings").Where(line => { return line[0] != '#'; }).ToArray();
+            foreach (string setting in settingsLines)
+            {
+                string[] settingArray = setting.Split('=');
+                switch (settingArray[0])
+                {
+                    case "minimizeJson":
+                        settings.minimizeJson = Convert.ToBoolean(settingArray[1]);
+                        break;
+                    case "fetchSitesLinksFile":
+                        settings.fetchSitesLinksFile = settingArray[1];
+                        break;
+                }
+            }
+        }
 
         private static void SelectScrapMode()
         {
@@ -28,8 +46,8 @@ namespace webScraper
             int choice;
             do
             {
-                Int32.TryParse(Console.ReadLine(), out choice);
-            } while (choice != 1 || choice != 2);
+                int.TryParse(Console.ReadLine(), out choice);
+            } while (choice != 1 && choice != 2);
             if (choice == 1)
             {
                 LocalScrap();
@@ -56,7 +74,7 @@ namespace webScraper
             {
                 try
                 {
-                    Dictionary<string, string> skimmedWebsite = ScrapWebsiteAt(filePath);
+                    Dictionary<string, string> skimmedWebsite = ScrapWebsite(LoadSiteFromPath(filePath));
                     if (skimmedWebsite.Keys.Count < Requirements.Count())
                     {
                         throw new System.Exception();
@@ -71,22 +89,82 @@ namespace webScraper
             SaveScrapedDataToFile(nodesDataList);
         }
 
-        private static void SaveScrapedDataToFile(List<Dictionary<string, string>> nodesDataList)
-        {
-            string json = JsonSerializer.Serialize(nodesDataList, new JsonSerializerOptions() { WriteIndented = true });
-            File.WriteAllText("JsonData.json", json);
-        }
 
         private static void OnlineScrap()
         {
-
+            List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
+            string[] links = LoadLinesFromFile(settings.fetchSitesLinksFile);
+            foreach (string link in links)
+            {
+                var data = ProcessFile(LoadSiteFromUrl(link));
+                if (ValidNodeData(data))
+                {
+                    nodesDataList.Add(data);
+                }
+            }
+            SaveScrapedDataToFile(nodesDataList);
         }
 
-        private static Dictionary<string, string> ScrapWebsiteAt(string path)
+        private static bool ValidNodeData(Dictionary<string, string> nodeData)
         {
-            Dictionary<string, string> scrappedData = new Dictionary<string, string>();
+            if (nodeData.Keys.Count < Requirements.Count())
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private static Dictionary<string, string> ProcessFile(HtmlDocument doc)
+        {
+            try
+            {
+                Dictionary<string, string> skimmedWebsite = ScrapWebsite(doc);
+                if (skimmedWebsite.Keys.Count < Requirements.Count())
+                {
+                    throw new System.Exception();
+                }
+                return skimmedWebsite;
+            }
+            catch
+            {
+                Console.WriteLine("Failed to scrap site");
+                return null;
+            }
+        }
+
+        private static void SaveScrapedDataToFile(List<Dictionary<string, string>> nodesDataList)
+        {
+            string json = JsonSerializer.Serialize(nodesDataList, new JsonSerializerOptions() { WriteIndented = !settings.minimizeJson });
+            File.WriteAllText("JsonData.json", json);
+        }
+
+        private static string[] LoadLinesFromFile(string path)
+        {
+            string[] lines = File.ReadAllLines(path);
+            return lines;
+        }
+
+        private static HtmlDocument LoadSiteFromUrl(string url)
+        {
+            HtmlDocument doc = new HtmlDocument();
+            WebClient webClient = new WebClient();
+            doc.LoadHtml(webClient.DownloadString(url));
+            return doc;
+        }
+
+        private static HtmlDocument LoadSiteFromPath(string path)
+        {
             HtmlDocument doc = new HtmlDocument();
             doc.Load(path);
+            return doc;
+        }
+
+        private static Dictionary<string, string> ScrapWebsite(HtmlDocument doc)
+        {
+            Dictionary<string, string> scrappedData = new Dictionary<string, string>();
             HtmlNodeCollection appDataNodes = doc.DocumentNode.SelectNodes(Variables.AppDataNode);
             foreach (HtmlNode node in appDataNodes)
             {
