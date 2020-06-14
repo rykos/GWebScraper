@@ -15,6 +15,7 @@ namespace webScraper
 
         static void Main(string[] args)
         {
+            RebuildDependables();
             string[] filePaths = Directory.GetFiles("sites");
             if (filePaths.Count() < 1)
             {
@@ -85,6 +86,13 @@ namespace webScraper
                 throw new System.Exception("There are no information specified to gather");
             }
             return reqs;
+        }
+        private static void RebuildDependables()
+        {
+            if (!Directory.Exists("sites"))
+            {
+                Directory.CreateDirectory("sites");
+            }
         }
     }
 }
