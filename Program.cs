@@ -11,17 +11,47 @@ namespace webScraper
 {
     class Program
     {
-        static readonly string[] Requirements = LoadRequirements();
+        static readonly string[] Requirements = LoadRequirements();//Fields to scrap
+        static readonly int? Failures;//Max amount of failed scrapped fields in single site
 
         static void Main(string[] args)
         {
             RebuildDependables();
+            SelectScrapMode();
+            
+        }
+
+
+        private static void SelectScrapMode()
+        {
+            Console.WriteLine("1/Scrap content inside ./sites\n2/Scrap content online using links file\n");
+            int choice;
+            do
+            {
+                Int32.TryParse(Console.ReadLine(), out choice);
+            } while (choice != 1 || choice != 2);
+            if (choice == 1)
+            {
+                LocalScrap();
+            }
+            else
+            {
+                OnlineScrap();
+            }
+        }
+
+        private static void LocalScrap()
+        {
+            if (!Directory.Exists("sites"))
+            {
+                Directory.CreateDirectory("sites");
+            }
             string[] filePaths = Directory.GetFiles("sites");
             if (filePaths.Count() < 1)
             {
                 throw new System.Exception("There are no sites to scrap in 'sites' folder at root directory");
             }
-            List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
             foreach (string filePath in filePaths)
             {
                 try
@@ -38,8 +68,18 @@ namespace webScraper
                     Console.WriteLine("Failed to scrap site: " + filePath);
                 }
             }
+            SaveScrapedDataToFile(nodesDataList);
+        }
+
+        private static void SaveScrapedDataToFile(List<Dictionary<string, string>> nodesDataList)
+        {
             string json = JsonSerializer.Serialize(nodesDataList, new JsonSerializerOptions() { WriteIndented = true });
             File.WriteAllText("JsonData.json", json);
+        }
+
+        private static void OnlineScrap()
+        {
+
         }
 
         private static Dictionary<string, string> ScrapWebsiteAt(string path)
@@ -87,6 +127,7 @@ namespace webScraper
             }
             return reqs;
         }
+
         private static void RebuildDependables()
         {
             if (!Directory.Exists("sites"))

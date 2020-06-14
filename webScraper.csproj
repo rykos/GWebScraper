@@ -9,4 +9,10 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.11.24" />
   </ItemGroup>
 
+  <Target Name="CopyCustomContentOnPublish" AfterTargets="Publish">
+    <Copy SourceFiles="Requirements" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="sites" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="Settings" DestinationFolder="$(PublishDir)" />
+  </Target>
+
 </Project>

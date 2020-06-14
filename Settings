@@ -1,0 +1,6 @@
+#Specify how many fields can fail and output will still be valid
+allowFailedFields=0
+#Sites will be scraped directly from web instead of local files in ./sites
+fetchSitesFromLinks=false
+#Specify websites links to scrap
+fetchSitesLinksFile="links.scrap"
