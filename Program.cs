@@ -72,23 +72,10 @@ namespace webScraper
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
             foreach (string filePath in filePaths)
             {
-                try
-                {
-                    Dictionary<string, string> skimmedWebsite = ScrapWebsite(LoadSiteFromPath(filePath));
-                    if (skimmedWebsite.Keys.Count < Requirements.Count())
-                    {
-                        throw new System.Exception();
-                    }
-                    nodesDataList.Add(skimmedWebsite);
-                }
-                catch
-                {
-                    Console.WriteLine("Failed to scrap site: " + filePath);
-                }
+                ProcessFile(LoadSiteFromPath(filePath), ref nodesDataList);
             }
             SaveScrapedDataToFile(nodesDataList);
         }
-
 
         private static void OnlineScrap()
         {
@@ -96,11 +83,7 @@ namespace webScraper
             string[] links = LoadLinesFromFile(settings.fetchSitesLinksFile);
             foreach (string link in links)
             {
-                var data = ProcessFile(LoadSiteFromUrl(link));
-                if (ValidNodeData(data))
-                {
-                    nodesDataList.Add(data);
-                }
+                ProcessFile(LoadSiteFromUrl(link), ref nodesDataList);
             }
             SaveScrapedDataToFile(nodesDataList);
         }
@@ -117,7 +100,7 @@ namespace webScraper
             }
         }
 
-        private static Dictionary<string, string> ProcessFile(HtmlDocument doc)
+        private static bool ProcessFile(HtmlDocument doc, ref List<Dictionary<string, string>> nodesDataList )
         {
             try
             {
@@ -126,12 +109,20 @@ namespace webScraper
                 {
                     throw new System.Exception();
                 }
-                return skimmedWebsite;
+                if (ValidNodeData(skimmedWebsite))
+                {
+                    nodesDataList.Add(skimmedWebsite);
+                    return true;
+                }
+                else
+                {
+                    throw new System.Exception();
+                }
             }
             catch
             {
                 Console.WriteLine("Failed to scrap site");
-                return null;
+                return false;
             }
         }
 
