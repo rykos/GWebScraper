@@ -2,7 +2,7 @@ namespace webScraper
 {
     public struct Settings
     {
-        public bool minimizeJson;
-        public string fetchSitesLinksFile;
+        public bool minimizeJson { get; set; }
+        public string fetchSitesLinksFile { get; set; }
     }
 }

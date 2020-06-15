@@ -2,42 +2,24 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using GlobalVariables;
 using System.Net;
+using HandleFiles;
 
 namespace webScraper
 {
     class Program
     {
-        static readonly string[] Requirements = LoadRequirements();//Fields to scrap
+        static readonly string[] Requirements = FileManagment.LoadRequirements();//Fields to scrap
         static Settings settings;
 
         static void Main(string[] args)
         {
-            RebuildDependables();
-            LoadSettings();
+            FileManagment.RebuildDependables();
+            FileManagment.LoadSettings(out settings);
             SelectScrapMode();
-        }
-
-        private static void LoadSettings()
-        {
-            string[] settingsLines = File.ReadAllLines("Settings").Where(line => { return line[0] != '#'; }).ToArray();
-            foreach (string setting in settingsLines)
-            {
-                string[] settingArray = setting.Split('=');
-                switch (settingArray[0])
-                {
-                    case "minimizeJson":
-                        settings.minimizeJson = Convert.ToBoolean(settingArray[1]);
-                        break;
-                    case "fetchSitesLinksFile":
-                        settings.fetchSitesLinksFile = settingArray[1];
-                        break;
-                }
-            }
         }
 
         private static void SelectScrapMode()
@@ -74,18 +56,18 @@ namespace webScraper
             {
                 ProcessFile(LoadSiteFromPath(filePath), ref nodesDataList);
             }
-            SaveScrapedDataToFile(nodesDataList);
+            FileManagment.SaveScrapedDataToFile(nodesDataList, settings);
         }
 
         private static void OnlineScrap()
         {
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
-            string[] links = LoadLinesFromFile(settings.fetchSitesLinksFile);
+            string[] links = FileManagment.LoadLinesFromFile(settings.fetchSitesLinksFile);
             foreach (string link in links)
             {
                 ProcessFile(LoadSiteFromUrl(link), ref nodesDataList);
             }
-            SaveScrapedDataToFile(nodesDataList);
+            FileManagment.SaveScrapedDataToFile(nodesDataList, settings);
         }
 
         private static bool ValidNodeData(Dictionary<string, string> nodeData)
@@ -100,7 +82,7 @@ namespace webScraper
             }
         }
 
-        private static bool ProcessFile(HtmlDocument doc, ref List<Dictionary<string, string>> nodesDataList )
+        private static bool ProcessFile(HtmlDocument doc, ref List<Dictionary<string, string>> nodesDataList)
         {
             try
             {
@@ -124,18 +106,6 @@ namespace webScraper
                 Console.WriteLine("Failed to scrap site");
                 return false;
             }
-        }
-
-        private static void SaveScrapedDataToFile(List<Dictionary<string, string>> nodesDataList)
-        {
-            string json = JsonSerializer.Serialize(nodesDataList, new JsonSerializerOptions() { WriteIndented = !settings.minimizeJson });
-            File.WriteAllText("JsonData.json", json);
-        }
-
-        private static string[] LoadLinesFromFile(string path)
-        {
-            string[] lines = File.ReadAllLines(path);
-            return lines;
         }
 
         private static HtmlDocument LoadSiteFromUrl(string url)
@@ -178,31 +148,6 @@ namespace webScraper
         {
             Regex regex = new Regex("[ ]{2,}|\\n|\\u002B", RegexOptions.None);
             return regex.Replace(input, " "); ;
-        }
-
-        private static string[] LoadRequirements()
-        {
-            if (!File.Exists("Requirements"))
-            {
-                throw new System.Exception("Requirements file does not exist in root directory");
-            }
-            string[] reqs = File.ReadAllLines("Requirements").Where(line =>
-            {
-                return (line[0] == '#') ? false : true;
-            }).ToArray();
-            if (reqs.Count() < 1)
-            {
-                throw new System.Exception("There are no information specified to gather");
-            }
-            return reqs;
-        }
-
-        private static void RebuildDependables()
-        {
-            if (!Directory.Exists("sites"))
-            {
-                Directory.CreateDirectory("sites");
-            }
         }
     }
 }

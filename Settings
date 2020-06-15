@@ -1,4 +1,0 @@
-#Specify websites links to scrap
-fetchSitesLinksFile=links.scrap
-#Minimize json output file
-minimizeJson=true
