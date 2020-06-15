@@ -47,7 +47,7 @@ namespace HandleFiles
         public static void SaveScrapedDataToFile(List<Dictionary<string, string>> nodesDataList, Settings settings)
         {
             string json = JsonSerializer.Serialize(nodesDataList, new JsonSerializerOptions() { WriteIndented = !settings.minimizeJson });
-            File.WriteAllText("JsonData.json", json);
+            File.WriteAllText(settings.outputPath ??= "JsonData.json", json);
         }
     }
 }

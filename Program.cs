@@ -14,12 +14,13 @@ namespace webScraper
     {
         static readonly string[] Requirements = FileManagment.LoadRequirements();//Fields to scrap
         static Settings settings;
-        static Raport raport;
+        static Raport raport = new Raport();
 
         static void Main(string[] args)
         {
-            FileManagment.RebuildDependables();
             FileManagment.LoadSettings(out settings);
+            FileManagment.RebuildDependables();
+            ParseArgs(args);
             SelectScrapMode();
         }
 
@@ -31,7 +32,6 @@ namespace webScraper
             {
                 int.TryParse(Console.ReadLine(), out choice);
             } while (choice != 1 && choice != 2);
-            raport = new Raport();
             if (choice == 1)
             {
                 LocalScrap();
@@ -48,10 +48,10 @@ namespace webScraper
             {
                 Directory.CreateDirectory("sites");
             }
-            string[] filePaths = Directory.GetFiles("sites");
+            string[] filePaths = Directory.GetFiles(settings.GetInputPath());
             if (filePaths.Count() < 1)
             {
-                throw new System.Exception("There are no sites to scrap in 'sites' folder at root directory");
+                throw new System.Exception(string.Format("There are no sites to scrap in {0} folder at root directory", settings.inputPath));
             }
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
             raport.AllFiles = filePaths.Count();
@@ -65,7 +65,7 @@ namespace webScraper
         private static void OnlineScrap()
         {
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
-            string[] links = FileManagment.LoadLinesFromFile(settings.fetchSitesLinksFile);
+            string[] links = FileManagment.LoadLinesFromFile(settings.GetInputPath());
             raport.AllFiles = links.Count();
             foreach (string link in links)
             {
@@ -155,6 +155,39 @@ namespace webScraper
         {
             Regex regex = new Regex("[ ]{2,}|\\n|\\u002B", RegexOptions.None);
             return regex.Replace(input, " "); ;
+        }
+
+        private static void ParseArgs(string[] args)
+        {
+            if(args[0] == "-h"){
+                Console.WriteLine("-i input_path\n-o output_path\n-m minimize json output\n-dm disable minimize json output");
+                Environment.Exit(0);
+            }
+            for (int i = 0; i < args.Count(); i++)
+            {
+                try
+                {
+                    switch (args[i])
+                    {
+                        case "-i"://Links file
+                            settings.inputPath = args[i + 1];
+                            break;
+                        case "-o"://Output path
+                            settings.outputPath = args[i + 1];
+                            break;
+                        case "-m"://Minimize
+                            settings.minimizeJson = true;
+                            break;
+                        case "-dm":
+                            settings.minimizeJson = false;
+                            break;
+                    }
+                }
+                catch
+                {
+                    throw new System.Exception("Invalid args");
+                }
+            }
         }
     }
 }
