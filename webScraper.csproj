@@ -11,7 +11,7 @@
 
   <Target Name="CopyCustomContentOnPublish" AfterTargets="Publish">
     <Copy SourceFiles="Requirements" DestinationFolder="$(PublishDir)" />
-    <Copy SourceFiles="Settings" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="Settings.json" DestinationFolder="$(PublishDir)" />
   </Target>
 
 </Project>
