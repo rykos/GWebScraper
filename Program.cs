@@ -14,6 +14,7 @@ namespace webScraper
     {
         static readonly string[] Requirements = FileManagment.LoadRequirements();//Fields to scrap
         static Settings settings;
+        static Raport raport;
 
         static void Main(string[] args)
         {
@@ -30,6 +31,7 @@ namespace webScraper
             {
                 int.TryParse(Console.ReadLine(), out choice);
             } while (choice != 1 && choice != 2);
+            raport = new Raport();
             if (choice == 1)
             {
                 LocalScrap();
@@ -52,6 +54,7 @@ namespace webScraper
                 throw new System.Exception("There are no sites to scrap in 'sites' folder at root directory");
             }
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
+            raport.AllFiles = filePaths.Count();
             foreach (string filePath in filePaths)
             {
                 ProcessFile(LoadSiteFromPath(filePath), ref nodesDataList);
@@ -63,6 +66,7 @@ namespace webScraper
         {
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
             string[] links = FileManagment.LoadLinesFromFile(settings.fetchSitesLinksFile);
+            raport.AllFiles = links.Count();
             foreach (string link in links)
             {
                 ProcessFile(LoadSiteFromUrl(link), ref nodesDataList);
@@ -86,6 +90,7 @@ namespace webScraper
         {
             try
             {
+                raport.WriteRaport();
                 Dictionary<string, string> skimmedWebsite = ScrapWebsite(doc);
                 if (skimmedWebsite.Keys.Count < Requirements.Count())
                 {
@@ -94,6 +99,7 @@ namespace webScraper
                 if (ValidNodeData(skimmedWebsite))
                 {
                     nodesDataList.Add(skimmedWebsite);
+                    raport.FinishedFile(true);
                     return true;
                 }
                 else
@@ -104,6 +110,7 @@ namespace webScraper
             catch
             {
                 Console.WriteLine("Failed to scrap site");
+                raport.FinishedFile(false);
                 return false;
             }
         }
