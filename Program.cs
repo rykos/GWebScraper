@@ -65,7 +65,7 @@ namespace webScraper
         private static void OnlineScrap()
         {
             List<Dictionary<string, string>> nodesDataList = new List<Dictionary<string, string>>();//Scraped data
-            string[] links = FileManagment.LoadLinesFromFile(settings.GetInputPath());
+            string[] links = FileManagment.LoadLinesFromFile(settings.GetInputFilePath());
             raport.AllFiles = links.Count();
             foreach (string link in links)
             {
@@ -153,13 +153,14 @@ namespace webScraper
 
         private static string FormatScrapedString(string input)
         {
-            Regex regex = new Regex("[ ]{2,}|\\n|\\u002B", RegexOptions.None);
+            Regex regex = new Regex("[ ]{2,}|\\n|\\u002B|\\u00A0", RegexOptions.None);
             return regex.Replace(input, " "); ;
         }
 
         private static void ParseArgs(string[] args)
         {
-            if(args[0] == "-h"){
+            if (args.Count() > 0 && args[0] == "-h")
+            {
                 Console.WriteLine("-i input_path\n-o output_path\n-m minimize json output\n-dm disable minimize json output");
                 Environment.Exit(0);
             }

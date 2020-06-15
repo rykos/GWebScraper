@@ -35,6 +35,9 @@ namespace HandleFiles
 
         public static string[] LoadLinesFromFile(string path)
         {
+            if(!File.Exists(path)){
+                throw new System.Exception(path + " does not exist");
+            }
             string[] lines = File.ReadAllLines(path);
             return lines;
         }
