@@ -14,5 +14,7 @@ Settings.json specify where file containing links is located and json minimize s
 Now to start simply run the app
 ```bash
 ./webScraper
+./webScraper -h # for help
+./webScraper -i /links.txt -o /output.json -m # Takes external links file and writes minimized output to external location
 ```
-Output is saved in root directory as JsonData.json
+Output is saved in root directory as JsonData.json by default
